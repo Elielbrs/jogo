@@ -169,7 +169,8 @@ class Inimigo(Personagem):
     ]
 
     def __init__(self, nivel_heroi):
-        peso = min(nivel_heroi, len(self.TIPOS))
+        # Exclui o Dragão Supremo da seleção aleatória (máximo índice 3)
+        peso = min(nivel_heroi, len(self.TIPOS) - 1)
         indice = random.randint(0, peso - 1)
         tipo = self.TIPOS[indice]
 
@@ -260,6 +261,7 @@ def batalha(heroi, mob):
         print(f"\n{heroi.nome} venceu a batalha contra {mob.nome}!")
         pausar()
         heroi.ganhar_experiencia(mob.xp)
+        print(f"{heroi.nome} ganhou {mob.xp} de experiência!")
         return "vitoria"
     else:
         print(f"\n{heroi.nome} foi derrotado por {mob.nome}...")
@@ -367,6 +369,20 @@ def tela_vitoria(heroi, batalhas_vencidas):
     separacao()
 
 
+def pergunta_enfrenta_dragao(heroi):
+    # Pergunta se o jogador quer enfrentar o Dragão Supremo
+    print("\nUm poder sombrio emerge da floresta... É o Dragão Supremo!")
+    print(f"{heroi.nome}, você está pronto para enfrentar este poderoso inimigo?")
+    print("1. Enfrentar o Dragão Supremo")
+    print("2. Fugir e ficar mais forte")
+    
+    while True:
+        escolha = input("\nEscolha uma opção: ").strip()
+        if escolha in ["1", "2"]:
+            return escolha == "1"
+        print("Opção inválida! Tente novamente.")
+
+
 def jogar():
     # Função principal que controla o fluxo do jogo
     heroi = menu_principal()
@@ -374,17 +390,23 @@ def jogar():
     batalhas_vencidas = 0
     ja_descansou = False
     boss_derrotado = False
+    nivel_anterior = heroi.nivel
 
     while True:
         acao = menu_explorar(heroi)
 
         if acao == "explorar":
             ja_descansou = False
+            nivel_anterior = heroi.nivel
 
-            # Boss após 5 batalhas
+            # Boss após 5 batalhas - pergunta se quer enfrentar
             if batalhas_vencidas >= 5 and not boss_derrotado:
-                print("\nUm poder sombrio emerge da floresta... É o Dragão Supremo!")
-                pausar(2)
+                quer_enfrenta = pergunta_enfrenta_dragao(heroi)
+                if not quer_enfrenta:
+                    print(f"\n{heroi.nome} recuou e decidiu treinar mais...")
+                    pausar()
+                    continue
+                
                 mob = Inimigo.__new__(Inimigo)
                 Personagem.__init__(mob, "Dragão Supremo", 300, 40, 25)
                 mob.xp = 150
@@ -399,6 +421,21 @@ def jogar():
                     boss_derrotado = True
                     tela_vitoria(heroi, batalhas_vencidas)
                     break
+                # Verifica se subiu de nível e já tem 5 vitórias
+                elif heroi.nivel > nivel_anterior and batalhas_vencidas >= 5:
+                    quer_enfrenta = pergunta_enfrenta_dragao(heroi)
+                    if quer_enfrenta:
+                        mob = Inimigo.__new__(Inimigo)
+                        Personagem.__init__(mob, "Dragão Supremo", 300, 40, 25)
+                        mob.xp = 150
+                        resultado = batalha(heroi, mob)
+                        if resultado == "vitoria":
+                            boss_derrotado = True
+                            tela_vitoria(heroi, batalhas_vencidas + 1)
+                            break
+                        elif resultado == "derrota":
+                            game_over(heroi, batalhas_vencidas)
+                            break
 
             elif resultado == "derrota":
                 game_over(heroi, batalhas_vencidas)
