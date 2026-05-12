@@ -3,14 +3,17 @@ import time
 
 
 def pausar(segundos=1.0):
+    # Pausa a execução por um tempo especificado
     time.sleep(segundos)
 
 
 def separacao():
+    # Exibe uma linha de separação
     print("=" * 30)
 
 
 def titulo(texto):
+    # Exibe um título centralizado com separadores
     separacao()
     print(texto.center(30))
     separacao()
@@ -21,6 +24,7 @@ def titulo(texto):
 # ─────────────────────────────────────────
 
 class Personagem:
+    # Classe base para personagens do jogo (heróis e inimigos)
     def __init__(self, nome, hp, ataque, defesa, nivel=1):
         self.nome = nome
         self.hp = hp
@@ -30,9 +34,11 @@ class Personagem:
         self.nivel = nivel
 
     def esta_vivo(self):
+        # Verifica se o personagem está vivo
         return self.hp > 0
 
     def receber_dano(self, dano):
+        # Aplica dano ao personagem considerando sua defesa
         dano_real = max(1, dano - self.defesa)
         self.hp = max(0, self.hp - dano_real)
         print(f"{self.nome} recebeu {dano_real} de dano! HP restante: {self.hp}/{self.hp_max}")
@@ -41,6 +47,7 @@ class Personagem:
         return dano_real
 
     def exibir_hp(self):
+        # Exibe a barra de vida do personagem
         proporcao = self.hp / self.hp_max
         barras = int(proporcao * 20)
         barra = "█" * barras + "░" * (20 - barras)
@@ -48,6 +55,7 @@ class Personagem:
         print(f"[{barra}]")
 
     def atacar(self, alvo):
+        # Realiza um ataque contra um alvo
         dano = self.ataque + random.randint(-3, 5)
         print(f"{self.nome} ataca {alvo.nome}!")
         pausar()
@@ -56,6 +64,7 @@ class Personagem:
 
 
 class Heroi(Personagem):
+    # Classe que representa o herói jogável com habilidades especiais
 
     STATS = {
         "Guerreiro": {"hp": 120, "ataque": 15, "defesa": 10},
@@ -71,24 +80,22 @@ class Heroi(Personagem):
         self.pocoes = 3
         self.habilidade_usada = False
 
-    # FIX: estava como função livre usando `self` incorretamente
     def usar_pocao(self):
+        # Usa uma poção para recuperar HP
         if self.pocoes > 0:
             cura = random.randint(20, 40)
-            # FIX: lógica de min estava invertida — impedia qualquer cura
             self.hp = min(self.hp + cura, self.hp_max)
             self.pocoes -= 1
             print(f"{self.nome} usou uma poção e recuperou {cura} HP! HP atual: {self.hp}/{self.hp_max}")
         else:
             print(f"{self.nome} não tem poções restantes!")
 
-    # FIX: estava como função livre; `return` vinha antes de marcar habilidade_usada
     def usar_habilidade(self, inimigo):
+        # Usa a habilidade especial do herói baseada em sua classe
         if self.habilidade_usada:
             print(f"{self.nome} já usou sua habilidade especial nesta batalha!")
             return 0
 
-        # FIX: marcação movida para antes do uso da habilidade
         self.habilidade_usada = True
 
         if self.classe == "Guerreiro":
@@ -110,7 +117,6 @@ class Heroi(Personagem):
             print(f"{self.nome} dispara uma chuva de flechas!")
             for _ in range(3):
                 dano = self.ataque + random.randint(-2, 3)
-                # FIX: antes chamava inimigo.receber_dano() como método inexistente
                 dano_causado = inimigo.receber_dano(dano)
                 total += dano_causado
             print(f"{self.nome} acertou {total} de dano no total!")
@@ -119,8 +125,8 @@ class Heroi(Personagem):
 
         return 0
 
-    # FIX: estava como função livre com parâmetro `self` inválido
     def ganhar_experiencia(self, xp):
+        # Adiciona experiência e gerencia o avanço de nível
         self.experiencia += xp
         limite = self.nivel * 100
         if self.experiencia >= limite:
@@ -139,6 +145,7 @@ class Heroi(Personagem):
             pausar()
 
     def exibir_status(self):
+        # Exibe o status completo do herói
         titulo("STATUS DO HERÓI")
         print(f"Nome      : {self.nome}")
         print(f"Classe    : {self.classe}")
@@ -151,6 +158,7 @@ class Heroi(Personagem):
 
 
 class Inimigo(Personagem):
+    # Classe que representa um inimigo com atributos escalados
 
     TIPOS = [
         {"nome": "Goblin",        "hp": 50,  "ataque": 10, "defesa": 5,  "xp": 20},
@@ -174,13 +182,13 @@ class Inimigo(Personagem):
         self.xp = tipo["xp"]
 
     def turno(self, heroi):
+        # Executa o turno do inimigo atacando o herói
         pausar()
         if random.random() < 0.2:
             print(f"{self.nome} usou um ataque especial!")
             dano_base = random.randint(self.ataque - 5, self.ataque + 5)
         else:
             dano_base = random.randint(self.ataque - 3, self.ataque + 3)
-        # FIX: antes chamava heroi.receber_dano() como método inexistente
         dano = heroi.receber_dano(dano_base)
         if not (random.random() < 0.2):
             print(f"{self.nome} atacou e causou {dano} de dano em {heroi.nome}!")
@@ -191,6 +199,7 @@ class Inimigo(Personagem):
 # ─────────────────────────────────────────
 
 def exibir_status_batalha(heroi, mob):
+    # Exibe o status de vida de ambos os combatentes
     print("\nStatus da Batalha:")
     separacao()
     heroi.exibir_hp()
@@ -199,6 +208,7 @@ def exibir_status_batalha(heroi, mob):
 
 
 def batalha(heroi, mob):
+    # Gerencia o sistema de combate entre o herói e um inimigo
     titulo(f"BATALHA: {heroi.nome} vs {mob.nome}")
     heroi.habilidade_usada = False
     turno = 1
@@ -241,13 +251,11 @@ def batalha(heroi, mob):
             else:
                 print(f"{heroi.nome} tentou fugir, mas falhou!")
 
-        # Turno do inimigo (só age se ainda estiver vivo)
         if mob.esta_vivo():
             mob.turno(heroi)
 
         turno += 1
 
-    # FIX: verificação de resultado estava fora do while e com indentação errada
     if heroi.esta_vivo():
         print(f"\n{heroi.nome} venceu a batalha contra {mob.nome}!")
         pausar()
@@ -264,6 +272,7 @@ def batalha(heroi, mob):
 # ─────────────────────────────────────────
 
 def menu_principal():
+    # Menu inicial onde o jogador cria seu herói
     titulo("RPG - A JORNADA DE ELDORIA")
     print("""
     Bem-vindo a Eldoria, um mundo de magia, aventura e perigos!
@@ -292,8 +301,6 @@ def menu_principal():
             break
         print("Escolha inválida! Tente novamente.")
 
-    # FIX: criação do herói estava dentro do while de validação
-    # FIX: variável renomeada para não colidir com a classe Heroi
     protagonista = Heroi(nome, classe)
 
     separacao()
@@ -308,6 +315,7 @@ def menu_principal():
 
 
 def menu_explorar(heroi):
+    # Menu de exploração onde o jogador escolhe suas ações
     while True:
         titulo("EXPLORAR ELDORIA")
         print("""
@@ -335,6 +343,7 @@ def menu_explorar(heroi):
 
 
 def game_over(heroi, batalhas_vencidas):
+    # Exibe a tela de derrota com estatísticas finais
     titulo("GAME OVER")
     print("""
     Sua jornada em Eldoria chegou ao fim. Mas não desanime!
@@ -349,6 +358,7 @@ def game_over(heroi, batalhas_vencidas):
 
 
 def tela_vitoria(heroi, batalhas_vencidas):
+    # Exibe a tela de vitória após derrotar o chefe final
     titulo("🏆  VITÓRIA  🏆")
     print(f"\n  {heroi.nome} derrotou o Dragão Supremo e salvou Eldoria!")
     print(f"\n  RESULTADOS FINAIS:")
@@ -358,6 +368,7 @@ def tela_vitoria(heroi, batalhas_vencidas):
 
 
 def jogar():
+    # Função principal que controla o fluxo do jogo
     heroi = menu_principal()
 
     batalhas_vencidas = 0
@@ -374,7 +385,6 @@ def jogar():
             if batalhas_vencidas >= 5 and not boss_derrotado:
                 print("\nUm poder sombrio emerge da floresta... É o Dragão Supremo!")
                 pausar(2)
-                # FIX: antes, `inimigo = inimigo(...)` sobrescrevia a classe
                 mob = Inimigo.__new__(Inimigo)
                 Personagem.__init__(mob, "Dragão Supremo", 300, 40, 25)
                 mob.xp = 150
@@ -408,7 +418,6 @@ def jogar():
             print("\nObrigado por jogar! Até a próxima aventura em Eldoria!")
             break
 
-    # FIX: print().strip().lower() não funciona — print retorna None
     resposta = input("\nJogar novamente? (s/n): ").strip().lower()
     if resposta == "s":
         jogar()
