@@ -78,7 +78,7 @@ class Heroi(Personagem):
         self.classe = classe
         self.experiencia = 0
         self.pocoes = 3
-        self.habilidade_usada = False
+        self.cooldown_habilidade = 0
 
     def usar_pocao(self):
         # Usa uma poção para recuperar HP
@@ -92,11 +92,11 @@ class Heroi(Personagem):
 
     def usar_habilidade(self, inimigo):
         # Usa a habilidade especial do herói baseada em sua classe
-        if self.habilidade_usada:
-            print(f"{self.nome} já usou sua habilidade especial nesta batalha!")
+        if self.cooldown_habilidade > 0:
+            print(f"{self.nome} habilidade está em cooldown por {self.cooldown_habilidade} turno(s)!")
             return 0
 
-        self.habilidade_usada = True
+        self.cooldown_habilidade = 2
 
         if self.classe == "Guerreiro":
             dano = self.ataque * 2 + random.randint(5, 10)
@@ -211,7 +211,7 @@ def exibir_status_batalha(heroi, mob):
 def batalha(heroi, mob):
     # Gerencia o sistema de combate entre o herói e um inimigo
     titulo(f"BATALHA: {heroi.nome} vs {mob.nome}")
-    heroi.habilidade_usada = False
+    heroi.cooldown_habilidade = 0
     turno = 1
 
     while heroi.esta_vivo() and mob.esta_vivo():
@@ -220,7 +220,9 @@ def batalha(heroi, mob):
 
         print("\nEscolha uma ação:")
         print("1. Atacar")
-        print("2. Usar Habilidade Especial")
+        print(f"2. Usar Habilidade Especial")
+        if heroi.cooldown_habilidade > 0:
+            print(f"   (Cooldown: {heroi.cooldown_habilidade} turno(s))")
         print(f"3. Usar Poção ({heroi.pocoes} restantes)")
         print("4. Fugir")
 
@@ -251,6 +253,10 @@ def batalha(heroi, mob):
                 return "fugiu"
             else:
                 print(f"{heroi.nome} tentou fugir, mas falhou!")
+
+        # Decrementa o cooldown da habilidade
+        if heroi.cooldown_habilidade > 0:
+            heroi.cooldown_habilidade -= 1
 
         if mob.esta_vivo():
             mob.turno(heroi)
