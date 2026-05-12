@@ -1,19 +1,27 @@
 import random
 import time
 
-def pausar (segundos=1.0):
-    time.sleep (segundos)
 
-def separacao ():
-    print ("=" * 30)
+def pausar(segundos=1.0):
+    time.sleep(segundos)
 
-def titulo (texto):
-    separacao ()
-    print (texto.center (30))
-    separacao ()
 
-class personagem:
-    def __init__ (self, nome, hp, ataque, defesa, nivel=1):
+def separacao():
+    print("=" * 30)
+
+
+def titulo(texto):
+    separacao()
+    print(texto.center(30))
+    separacao()
+
+
+# ─────────────────────────────────────────
+# Classes
+# ─────────────────────────────────────────
+
+class Personagem:
+    def __init__(self, nome, hp, ataque, defesa, nivel=1):
         self.nome = nome
         self.hp = hp
         self.hp_max = hp
@@ -21,367 +29,392 @@ class personagem:
         self.defesa = defesa
         self.nivel = nivel
 
-def esta_vivo (personagem):
-    return personagem.hp > 0
+    def esta_vivo(self):
+        return self.hp > 0
 
-def receber_dano (personagem, dano):
-    dano_real = max (1, dano - personagem.defesa)
-    personagem.hp = max (0, personagem.hp - dano_real)
-    print (f"{personagem.nome} recebeu {dano_real} de dano! HP restante: {personagem.hp}/{personagem.hp_max}")
-    if personagem.hp <= 0:
-        print (f"{personagem.nome} foi derrotado!")
+    def receber_dano(self, dano):
+        dano_real = max(1, dano - self.defesa)
+        self.hp = max(0, self.hp - dano_real)
+        print(f"{self.nome} recebeu {dano_real} de dano! HP restante: {self.hp}/{self.hp_max}")
+        if self.hp <= 0:
+            print(f"{self.nome} foi derrotado!")
+        return dano_real
 
-def atacar (personagem, alvo):
-    dano = personagem.ataque + random.randint (-3, 5)
-    print (f"{personagem.nome} ataca {alvo.nome}!")
-    pausar ()
-    receber_dano (alvo, dano)
+    def exibir_hp(self):
+        proporcao = self.hp / self.hp_max
+        barras = int(proporcao * 20)
+        barra = "█" * barras + "░" * (20 - barras)
+        print(f"{self.nome}: {self.hp}/{self.hp_max} HP")
+        print(f"[{barra}]")
 
-def exibir_hp (personagem):
-    proporcao = personagem.hp / personagem.hp_max
-    barras = int (proporcao * 20)
-    barra = "█" * barras + "░" * (20 - barras)
-    print (f"{personagem.nome}: {personagem.hp}/{personagem.hp_max} HP")
-    print (f"[{barra}]")
+    def atacar(self, alvo):
+        dano = self.ataque + random.randint(-3, 5)
+        print(f"{self.nome} ataca {alvo.nome}!")
+        pausar()
+        alvo.receber_dano(dano)
+        return dano
 
-class heroi (personagem):
-    def __init__ (self, nome, classe):
 
-        stats = {
-            "Guerreiro": {"hp": 120, "ataque": 15, "defesa": 10},
-            "Mago": {"hp": 80, "ataque": 20, "defesa": 5},
-            "Arqueiro": {"hp": 100, "ataque": 18, "defesa": 8}
-        }
+class Heroi(Personagem):
 
-        s = stats[classe]
+    STATS = {
+        "Guerreiro": {"hp": 120, "ataque": 15, "defesa": 10},
+        "Mago":      {"hp": 80,  "ataque": 20, "defesa": 5},
+        "Arqueiro":  {"hp": 100, "ataque": 18, "defesa": 8},
+    }
+
+    def __init__(self, nome, classe):
+        s = self.STATS[classe]
         super().__init__(nome, s["hp"], s["ataque"], s["defesa"])
         self.classe = classe
         self.experiencia = 0
-        self.nivel = 1
         self.pocoes = 3
         self.habilidade_usada = False
 
-def usar_pocao (heroi):
-    if heroi.pocoes > 0:
-        cura = random.randint (20, 40)
-        heroi.hp = min (heroi.hp, heroi.hp_max + cura)
-        heroi.pocoes -= 1
-        print (f"{heroi.nome} usou uma poção e recuperou {cura} HP! HP atual: {heroi.hp}/{heroi.hp_max}")
-    else:
-        print (f"{heroi.nome} não tem poções restantes!")
+    # FIX: estava como função livre usando `self` incorretamente
+    def usar_pocao(self):
+        if self.pocoes > 0:
+            cura = random.randint(20, 40)
+            # FIX: lógica de min estava invertida — impedia qualquer cura
+            self.hp = min(self.hp + cura, self.hp_max)
+            self.pocoes -= 1
+            print(f"{self.nome} usou uma poção e recuperou {cura} HP! HP atual: {self.hp}/{self.hp_max}")
+        else:
+            print(f"{self.nome} não tem poções restantes!")
 
-def usar_habilidade (heroi, inimigo):
-    if heroi.habilidade_usada:
-        print (f"{heroi.nome} já usou sua habilidade especial nesta batalha!")
-        return
-        
+    # FIX: estava como função livre; `return` vinha antes de marcar habilidade_usada
+    def usar_habilidade(self, inimigo):
+        if self.habilidade_usada:
+            print(f"{self.nome} já usou sua habilidade especial nesta batalha!")
+            return 0
+
+        # FIX: marcação movida para antes do uso da habilidade
         self.habilidade_usada = True
 
-    if heroi.classe == "Guerreiro":
-        dano = heroi.ataque * 2 + random.randint (5, 10)
-        print (f"{heroi.nome} usa Golpe Poderoso!")
-        pausar ()
-        receber_dano (inimigo, dano)
-        return dano
+        if self.classe == "Guerreiro":
+            dano = self.ataque * 2 + random.randint(5, 10)
+            print(f"{self.nome} usa Golpe Poderoso!")
+            pausar()
+            inimigo.receber_dano(dano)
+            return dano
+
+        elif self.classe == "Mago":
+            dano = self.ataque * 2 + random.randint(10, 15)
+            print(f"{self.nome} conjura Bola de Fogo!")
+            pausar()
+            inimigo.receber_dano(dano)
+            return dano
+
+        elif self.classe == "Arqueiro":
+            total = 0
+            print(f"{self.nome} dispara uma chuva de flechas!")
+            for _ in range(3):
+                dano = self.ataque + random.randint(-2, 3)
+                # FIX: antes chamava inimigo.receber_dano() como método inexistente
+                dano_causado = inimigo.receber_dano(dano)
+                total += dano_causado
+            print(f"{self.nome} acertou {total} de dano no total!")
+            pausar()
+            return total
+
+        return 0
+
+    # FIX: estava como função livre com parâmetro `self` inválido
+    def ganhar_experiencia(self, xp):
+        self.experiencia += xp
+        limite = self.nivel * 100
+        if self.experiencia >= limite:
+            self.nivel += 1
+            self.experiencia -= limite
+            self.hp_max += 20
+            self.hp = self.hp_max
+            self.ataque += 5
+            self.defesa += 3
+            self.pocoes += 1
+            print(f"{self.nome} subiu para o nível {self.nivel}!")
+            print(
+                f"HP máximo: {self.hp_max} | Ataque: {self.ataque} "
+                f"| Defesa: {self.defesa} | Poções: {self.pocoes}"
+            )
+            pausar()
+
+    def exibir_status(self):
+        titulo("STATUS DO HERÓI")
+        print(f"Nome      : {self.nome}")
+        print(f"Classe    : {self.classe}")
+        print(f"Nível     : {self.nivel}")
+        print(f"Experiência: {self.experiencia}/{self.nivel * 100}")
+        print(f"HP        : {self.hp}/{self.hp_max}")
+        print(f"Ataque    : {self.ataque}")
+        print(f"Defesa    : {self.defesa}")
+        print(f"Poções    : {self.pocoes}")
 
 
-    elif heroi.classe == "Mago":
-        dano = heroi.ataque * 2 + random.randint (10, 15)
-        inimigo.hp = max (0, inimigo.hp - dano)
-        print (f"{heroi.nome} conjura Bola de Fogo!")
-        pausar ()
-        receber_dano (inimigo, dano)
-        return dano
-
-    elif heroi.classe == "Arqueiro":
-        total = 0
-        print (f"{heroi.nome} dispara uma chuva de flechas!")
-        for i in range (3):
-            dano = heroi.ataque + random.randint (-2, 3)
-            dano_cauasdo = inimigo.receber_dano (dano)
-            total += dano_cauasdo
-        print (f"{heroi.nome} acertou {total} de dano com a chuva de flechas!")
-        pausar ()
-        return total
-    
-def ganhar_experiencia (self, xp):
-    self.experiencia += xp
-    limite = self.nivel * 100
-    if self.experiencia >= limite:
-        self.nivel += 1
-        self.experiencia -= limite
-        self.hp_max += 20
-        self.hp = self.hp_max
-        self.ataque += 5
-        self.defesa += 3
-        self.pocoes += 1
-        print (f"{self.nome} subiu para o nível {self.nivel}!")
-        print (f"HP máximo aumentado para {self.hp_max}, ataque para {self.ataque}, defesa para {self.defesa} e poções para {self.pocoes}.")
-        pausar ()
-
-class inimigo (personagem):
+class Inimigo(Personagem):
 
     TIPOS = [
-        {"nome": "Goblin", "hp": 50, "ataque": 10, "defesa": 5, "xp": 20},
-        {"nome": "Orc", "hp": 80, "ataque": 15, "defesa": 8, "xp": 40},
-        {"nome": "Minotauro", "hp": 100, "ataque": 18, "defesa": 10, "xp": 50},
-        {"nome": "Troll", "hp": 120, "ataque": 20, "defesa": 12, "xp": 60},
-        {"nome": "Dragão Supremo", "hp": 200, "ataque": 30, "defesa": 20, "xp": 100}
+        {"nome": "Goblin",        "hp": 50,  "ataque": 10, "defesa": 5,  "xp": 20},
+        {"nome": "Orc",           "hp": 80,  "ataque": 15, "defesa": 8,  "xp": 40},
+        {"nome": "Minotauro",     "hp": 100, "ataque": 18, "defesa": 10, "xp": 50},
+        {"nome": "Troll",         "hp": 120, "ataque": 20, "defesa": 12, "xp": 60},
+        {"nome": "Dragão Supremo","hp": 200, "ataque": 30, "defesa": 20, "xp": 100},
     ]
 
-    def __init__ (self,nivel_heroi):
-        peso = min (nivel_heroi, len (self.TIPOS))
-        indice = random.randint (0, peso - 1)
+    def __init__(self, nivel_heroi):
+        peso = min(nivel_heroi, len(self.TIPOS))
+        indice = random.randint(0, peso - 1)
         tipo = self.TIPOS[indice]
 
         fator = 1 + (nivel_heroi - 1) * 0.15
-        hp_escalado = int (tipo["hp"] * fator)
-        ataque_escalado = int (tipo["ataque"] * fator)
-        defesa_escalada = int (tipo["defesa"] * fator)
+        hp_escalado     = int(tipo["hp"]     * fator)
+        ataque_escalado = int(tipo["ataque"] * fator)
+        defesa_escalada = int(tipo["defesa"] * fator)
 
         super().__init__(tipo["nome"], hp_escalado, ataque_escalado, defesa_escalada)
-        self.experiencia = tipo["xp"]
+        self.xp = tipo["xp"]
 
-def exibir_status_batalha (heroi, inimigo):
-    print ("\nStatus da Batalha:")
-    separacao ()
-    exibir_hp (heroi)
-    exibir_hp (inimigo)
-    separacao ()
+    def turno(self, heroi):
+        pausar()
+        if random.random() < 0.2:
+            print(f"{self.nome} usou um ataque especial!")
+            dano_base = random.randint(self.ataque - 5, self.ataque + 5)
+        else:
+            dano_base = random.randint(self.ataque - 3, self.ataque + 3)
+        # FIX: antes chamava heroi.receber_dano() como método inexistente
+        dano = heroi.receber_dano(dano_base)
+        if not (random.random() < 0.2):
+            print(f"{self.nome} atacou e causou {dano} de dano em {heroi.nome}!")
 
-def turno_inimigo (inimigo, heroi):
-    pausar ()
-    if random.random () < 0.2:
-        dano_base = random.randint (inimigo.ataque - 5, inimigo.ataque + 5)
-        dano = heroi.receber_dano (dano_base)
-        print (f"{inimigo.nome} usou um ataque especial!")
-    else:
-        dano_base = random.randint (inimigo.ataque - 3, inimigo.ataque + 3)
-        dano = heroi.receber_dano (dano_base)
-        print (f"{inimigo.nome} ataca e causa {dano} de dano em {heroi.nome}!")
 
-def batalha (heroi, inimigo):
-    titulo (f"BATALHA: {heroi.nome} vs {inimigo.nome}")
+# ─────────────────────────────────────────
+# Batalha
+# ─────────────────────────────────────────
+
+def exibir_status_batalha(heroi, mob):
+    print("\nStatus da Batalha:")
+    separacao()
+    heroi.exibir_hp()
+    mob.exibir_hp()
+    separacao()
+
+
+def batalha(heroi, mob):
+    titulo(f"BATALHA: {heroi.nome} vs {mob.nome}")
     heroi.habilidade_usada = False
     turno = 1
 
-    while esta_vivo (heroi) and esta_vivo (inimigo):
-        print (f"\n--- Turno {turno} ---")
-        exibir_status_batalha (heroi, inimigo)
+    while heroi.esta_vivo() and mob.esta_vivo():
+        print(f"\n--- Turno {turno} ---")
+        exibir_status_batalha(heroi, mob)
 
-        print ("\nEscolha uma ação:")
-        print ("1. Atacar")
-        print ("2. Usar Habilidade Especial")
-        print (f"3. Usar Poção ({heroi.pocoes}) restantes)")
-        print ("4. Fugir")
+        print("\nEscolha uma ação:")
+        print("1. Atacar")
+        print("2. Usar Habilidade Especial")
+        print(f"3. Usar Poção ({heroi.pocoes} restantes)")
+        print("4. Fugir")
 
         while True:
-            escolha = input ("\nDigite o número da ação: ")
+            escolha = input("\nDigite o número da ação: ").strip()
             if escolha in ["1", "2", "3", "4"]:
                 break
-            else:
-                print ("Ação inválida! Tente novamente.")
+            print("Ação inválida! Tente novamente.")
 
-            print ()
+        print()
 
         if escolha == "1":
-            dano = atacar (heroi, inimigo)
-            print (f"{heroi.nome} causou {dano} de dano em {inimigo.nome}!")
+            dano = heroi.atacar(mob)
+            print(f"{heroi.nome} causou {dano} de dano em {mob.nome}!")
+
         elif escolha == "2":
-            dano = usar_habilidade (heroi, inimigo)
+            dano = heroi.usar_habilidade(mob)
             if dano and dano > 0:
-                print (f"{heroi.nome} causou {dano} de dano com a habilidade especial em {inimigo.nome}!")
+                print(f"Habilidade causou {dano} de dano em {mob.nome}!")
+
         elif escolha == "3":
-            usar_pocao (heroi)
+            heroi.usar_pocao()
+
         elif escolha == "4":
-            if random.random () < 0.4:
-                print ("Você conseguiu fugir da batalha!")
-                pausar ()
+            if random.random() < 0.4:
+                print("Você conseguiu fugir da batalha!")
+                pausar()
                 return "fugiu"
             else:
-                print (f"{heroi.nome} tentou fugir, mas falhou!")
-        else:
-            print ("Ação inválida! Tente novamente.")
-            continue
+                print(f"{heroi.nome} tentou fugir, mas falhou!")
 
-        if esta_vivo (inimigo):
-            turno_inimigo (inimigo, heroi)
-        else:
-            print (f"{heroi.nome} venceu a batalha contra {inimigo.nome}!")
-            pausar ()
+        # Turno do inimigo (só age se ainda estiver vivo)
+        if mob.esta_vivo():
+            mob.turno(heroi)
 
         turno += 1
 
-        if heroi.esta_vivo ():
-            print (f"{heroi.nome} sobreviveu à batalha!")
-            heroi.ganhar_experiencia (inimigo.experiencia)
-            return "vitoria"
-        else:
-            print (f"{heroi.nome} foi derrotado por {inimigo.nome}...")
-            return "derrota"
-        
+    # FIX: verificação de resultado estava fora do while e com indentação errada
+    if heroi.esta_vivo():
+        print(f"\n{heroi.nome} venceu a batalha contra {mob.nome}!")
+        pausar()
+        heroi.ganhar_experiencia(mob.xp)
+        return "vitoria"
+    else:
+        print(f"\n{heroi.nome} foi derrotado por {mob.nome}...")
+        pausar()
+        return "derrota"
+
+
+# ─────────────────────────────────────────
+# Menus e fluxo principal
+# ─────────────────────────────────────────
+
 def menu_principal():
-    titulo ("RPG - A JORNADA DE ELDORIA")
-
+    titulo("RPG - A JORNADA DE ELDORIA")
     print("""
-            Bem-vindo a Eldoria, um mundo de magia, aventura e perigos!
-            Escolha seu herói e prepare-se para enfrentar monstros, explorar masmorras
-            e se tornar uma lenda!
+    Bem-vindo a Eldoria, um mundo de magia, aventura e perigos!
+    Escolha seu herói e prepare-se para enfrentar monstros,
+    explorar masmorras e se tornar uma lenda!
     """)
-
-    pausar (0.5)
+    pausar(0.5)
 
     while True:
-        nome = input ("Digite o nome do seu herói: ").strip ()
+        nome = input("Digite o nome do seu herói: ").strip()
         if nome:
             break
-        print ("O nome não pode ser vazio! Tente novamente.")
+        print("O nome não pode ser vazio! Tente novamente.")
 
-        separacao ()
-    print ("\nEscolha a classe do seu herói:")
-    print ("1. Guerreiro - Forte e resistente, especializado em combate corpo a corpo.")
-    print ("2. Mago - Mestre das artes arcanas, capaz de conjurar feitiços poderosos.")
-    print ("3. Arqueiro - Ágil e preciso, especialista em ataques à distância.")
+    separacao()
+    print("\nEscolha a classe do seu herói:")
+    print("1. Guerreiro - Forte e resistente, especializado em combate corpo a corpo.")
+    print("2. Mago      - Mestre das artes arcanas, capaz de conjurar feitiços poderosos.")
+    print("3. Arqueiro  - Ágil e preciso, especialista em ataques à distância.")
 
     classes = {"1": "Guerreiro", "2": "Mago", "3": "Arqueiro"}
     while True:
-        escolha = input ("\nDigite o número da classe: ").strip ()
+        escolha = input("\nDigite o número da classe: ").strip()
         if escolha in classes:
             classe = classes[escolha]
             break
-        print ("Escolha inválida! Tente novamente.")
+        print("Escolha inválida! Tente novamente.")
 
-        classe = classes[escolha]
-        heroi = heroi (nome, classe)
+    # FIX: criação do herói estava dentro do while de validação
+    # FIX: variável renomeada para não colidir com a classe Heroi
+    protagonista = Heroi(nome, classe)
 
-        separacao ()
-    print (f"\n{heroi.nome} o {heroi.classe} foi criado com sucesso!")
-    print (f"HP: {heroi.hp}, Ataque: {heroi.ataque}, Defesa: {heroi.defesa}, Poções: {heroi.pocoes}")
-    pausar (1.5)
+    separacao()
+    print(f"\n{protagonista.nome} o {protagonista.classe} foi criado com sucesso!")
+    print(
+        f"HP: {protagonista.hp} | Ataque: {protagonista.ataque} "
+        f"| Defesa: {protagonista.defesa} | Poções: {protagonista.pocoes}"
+    )
+    pausar(1.5)
 
-    return heroi
+    return protagonista
 
-def exibiir_status_heroi (heroi):
-    titulo ("STATUS DO HERÓI")
-    print (f"Nome: {heroi.nome}")
-    print (f"Classe: {heroi.classe}")
-    print (f"Nível: {heroi.nivel}")
-    print (f"Experiência: {heroi.experiencia}/{heroi.nivel * 100}")
-    print (f"HP: {heroi.hp}/{heroi.hp_max}")
-    print (f"Ataque: {heroi.ataque}")
-    print (f"Defesa: {heroi.defesa}")
-    print (f"Poções restantes: {heroi.pocoes}")
 
-def menu_explorar (heroi):
+def menu_explorar(heroi):
     while True:
-        titulo ("EXPLORAR ELDORIA")
-        print ("""
-            Você está em uma vila pacífica, mas rumores de monstros nas redondezas
-            estão se espalhando. O que você deseja fazer?
+        titulo("EXPLORAR ELDORIA")
+        print("""
+    Você está em uma vila pacífica. Rumores de monstros nas
+    redondezas estão se espalhando. O que deseja fazer?
         """)
+        print("1. Explorar a floresta próxima (enfrentar monstros)")
+        print("2. Descansar na taverna (recuperar 100% HP e ganhar 1 poção)")
+        print("3. Ver status do herói")
+        print("4. Sair do jogo")
 
-        print ("1. Explorar a floresta próxima (enfrentar monstros)")
-        print ("2. Descansar na taverna (recuperar 100% HP e ganhar 1 poção)")
-        print ("3. Ver status do herói")
-        print ("4. Sair do jogo")
-
-        opcao = input ("\nDigite o número da ação: ").strip ()
-
-        
+        opcao = input("\nDigite o número da ação: ").strip()
 
         if opcao == "1":
             return "explorar"
         elif opcao == "2":
             return "descansar"
         elif opcao == "3":
-            exibiir_status_heroi (heroi)
+            heroi.exibir_status()
         elif opcao == "4":
             return "sair"
         else:
-            print ("Opção inválida! Tente novamente.")
-            pausar (1.5)
+            print("Opção inválida! Tente novamente.")
+            pausar(1.5)
 
 
-def gamer_over(heroi, batalhas_vencidas):
-    titulo ("GAME OVER")
-    print ("""
-        Sua jornada em Eldoria chegou ao fim. Mas não desanime, aventureiro!
-        Cada derrota é uma oportunidade de aprender e crescer mais forte.
-        Volte para a vila, prepare-se melhor e tente novamente!
+def game_over(heroi, batalhas_vencidas):
+    titulo("GAME OVER")
+    print("""
+    Sua jornada em Eldoria chegou ao fim. Mas não desanime!
+    Cada derrota é uma oportunidade de crescer mais forte.
     """)
-
-    print (f" {heroi.nome}, o {heroi.classe}, caiu...")
-    print (f"Você alcançou o nível {heroi.nivel} e acumulou {heroi.experiencia} de experiência.")
-    print (f"{batalhas_vencidas} batalhas vencidas.")
-
-    pausar (2.5)
-    separacao ()
+    print(f"  {heroi.nome}, o {heroi.classe}, caiu em batalha...")
+    print(f"  Nível alcançado   : {heroi.nivel}")
+    print(f"  Experiência final : {heroi.experiencia}")
+    print(f"  Batalhas vencidas : {batalhas_vencidas}")
+    pausar(2.5)
+    separacao()
 
 
 def tela_vitoria(heroi, batalhas_vencidas):
-    """Tela exibida ao completar o jogo."""
-    titulo("   🏆  VITÓRIA  🏆   ")
-    print(f"\n  {heroi.nome} derrotou o Dragão Negro e salvou Eldoria!")
-    print(f"\n  📊 RESULTADOS FINAIS:")
+    titulo("🏆  VITÓRIA  🏆")
+    print(f"\n  {heroi.nome} derrotou o Dragão Supremo e salvou Eldoria!")
+    print(f"\n  RESULTADOS FINAIS:")
     print(f"     Nível alcançado  : {heroi.nivel}")
     print(f"     Batalhas vencidas: {batalhas_vencidas}")
     separacao()
+
 
 def jogar():
     heroi = menu_principal()
 
     batalhas_vencidas = 0
-    descansos = False
-    boss_derrotados = False
+    ja_descansou = False
+    boss_derrotado = False
 
     while True:
-        acao = menu_explorar (heroi)
+        acao = menu_explorar(heroi)
 
         if acao == "explorar":
-            descansos = False
+            ja_descansou = False
 
-            if batalhas_vencidas >= 5 and not boss_derrotados:
-                print ("\nUm poderoso inimigo sombriu a floresta... É o Dragão Supremo!")
-                pausar (2)
-                inimigo = inimigo.__new__ (inimigo)
-                personagem.__init__ (inimigo, "Dragão Supremo", 300, 40, 25)
-                inimigo.experiencia = 150
+            # Boss após 5 batalhas
+            if batalhas_vencidas >= 5 and not boss_derrotado:
+                print("\nUm poder sombrio emerge da floresta... É o Dragão Supremo!")
+                pausar(2)
+                # FIX: antes, `inimigo = inimigo(...)` sobrescrevia a classe
+                mob = Inimigo.__new__(Inimigo)
+                Personagem.__init__(mob, "Dragão Supremo", 300, 40, 25)
+                mob.xp = 150
             else:
-                inimigo = inimigo (heroi.nivel)
+                mob = Inimigo(heroi.nivel)
 
-            resultado = batalha (heroi, inimigo)
+            resultado = batalha(heroi, mob)
 
             if resultado == "vitoria":
                 batalhas_vencidas += 1
-                if inimigo.nome == "Dragão Supremo":
-                    boss_derrotados = True
-                    tela_vitoria (heroi, batalhas_vencidas)
+                if mob.nome == "Dragão Supremo":
+                    boss_derrotado = True
+                    tela_vitoria(heroi, batalhas_vencidas)
+                    break
+
             elif resultado == "derrota":
-                gamer_over (heroi, batalhas_vencidas)
+                game_over(heroi, batalhas_vencidas)
                 break
 
         elif acao == "descansar":
-            if not descansos:
+            if not ja_descansou:
                 heroi.hp = heroi.hp_max
                 heroi.pocoes += 1
-                print (f"\n{heroi.nome} descansou na taverna e recuperou HP e ganhou 1 poção!")
-                descansos = True
+                print(f"\n{heroi.nome} descansou na taverna e recuperou todo o HP e ganhou 1 poção!")
+                ja_descansou = True
             else:
-                print ("\nVocê já descansou recentemente! Explore um pouco mais antes de descansar novamente.")
-
-                pausar ()
+                print("\nVocê já descansou recentemente! Explore mais antes de descansar novamente.")
+            pausar()
 
         elif acao == "sair":
-            print ("\nObrigado por jogar! Até a próxima aventura em Eldoria!")
+            print("\nObrigado por jogar! Até a próxima aventura em Eldoria!")
             break
 
-        print ("\n Jogar novamente? (s/n)").strip ().lower ()
-        resposta = input ()
-        if resposta != "s":
-            print ("\nObrigado por jogar! Até a próxima aventura em Eldoria!")
-            break
+    # FIX: print().strip().lower() não funciona — print retorna None
+    resposta = input("\nJogar novamente? (s/n): ").strip().lower()
+    if resposta == "s":
+        jogar()
+    else:
+        print("\nObrigado por jogar! Até a próxima aventura em Eldoria!")
+
 
 if __name__ == "__main__":
-    jogar ()
-
-
+    jogar()
